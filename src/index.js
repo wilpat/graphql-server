@@ -1,60 +1,45 @@
+const { prisma } = require('./generated/prisma-client') // This is how your schema definitions gets into this file for use
 const { GraphQLServer } = require('graphql-yoga');
 
-let links = [{
-	id: 'link-0',
-	url: 'www.howtographql.com',
-	description: 'Fullstack tutorial for GraphQL'
-}];
-
-let idCount = links.length;
-
-getLink = (id) =>{
-	return links.filter(link=>{
-		return (link.id == `link-${id}`)
-	})[0];
-}
 const resolvers = {
   Query: {
     info: () => `This is a string!!`,
-    feed: () => links,
-    link: (parent, args) => getLink(args.id)
+    feed: (parent, args, context, info) => {
+      return context.prisma.links();
+    },
+    // TODO : Read single link record
   },
+
   Mutation: {
-  	post: (parant, args) => {
-  		const link = {
-  			id: `link-${idCount++}`,
-  			description: args.description,
-  			url: args.url
-  		}
-  		links.push(link)
-  		return link;
+
+  	post: (parant, args, context) => {
+  		return context.prisma.createLink({
+        url: args.url,
+        description: args.description
+      });
   	},
-  	updateLink: (parent, args) =>{
-  		let link = getLink(args.id);
-    	let id = links.indexOf(link);
-    	links[id].url = args.url;
-    	links[id].description = args.description;
-    	return links[id];
-  	},
-  	deleteLink: (parent, args) =>{
-  		let link = getLink(args.id);
-  		let id = links.indexOf(link);
-  		links.splice(id,1);
-  		return link;
+
+    // TODO: Update
+
+  	deleteLink: (parent, args, context) =>{
+  		return context.prisma.deleteLink({
+        id: args.id,
+      });
   	}
   },
-  Link:{
+  /*Link:{
   	//Each resolver receives the data of the previous level of a graphQL query generally tagged as "parent or root"
   	id: (parent) => parent.id,
   	description: (parent) => parent.description,
   	url: (parent) => parent.url
-  }
+  }*/
   // This link resolver can be entirely removed though as graphQL server can infer what links look like.
 }
 
 const server = new GraphQLServer({
 	typeDefs: './src/schema.graphql',
-	resolvers
+	resolvers,
+  context: { prisma } // Schema defs gets attached to the resolvers here
 })
 
 server.start(() => console.log(`Server is running on http://localhost:4000`))
