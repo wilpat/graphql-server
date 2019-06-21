@@ -35,7 +35,7 @@ async function login (parent, args, context, info) {
 	}
 }
 
-function post (parant, args, context) {
+function post (parent, args, context) {
 	const userId = getUserId(context); // This uses the token in the header to authenticate the user
 	return context.prisma.createLink({
 		url: args.url,
@@ -44,8 +44,27 @@ function post (parant, args, context) {
 	});
 }
 
+async function vote(parent, args, context, info){
+	// Validate user
+	const userId = getUserId(context)
+
+	const linkExists = await context.prisma.$exists.vote({
+		user: {id: userId},
+		link: {id: args.linkID}
+	})
+	if(linkExists) {
+		throw new Error(`Already voted for link: ${args.linkID}`)
+	}
+
+	return context.prisma.createVote({
+		user: { connect: { id: userId } },
+		link: { connect: { id: args.linkID } }
+	})
+}
+
 module.exports = {
 	signup,
 	login,
 	post,
+	vote
 }
