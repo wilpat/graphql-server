@@ -22,6 +22,10 @@ type AuthPayload {
 	user: User
 }
 
+type Subscription {
+	newLink: Link
+}
+
 type Mutation {
 	post(url: String!, description: String!): Link!
 

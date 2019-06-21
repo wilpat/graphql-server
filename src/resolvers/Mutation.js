@@ -36,7 +36,7 @@ async function login (parent, args, context, info) {
 }
 
 function post (parant, args, context) {
-	const userId = getUserId(context);
+	const userId = getUserId(context); // This uses the token in the header to authenticate the user
 	return context.prisma.createLink({
 		url: args.url,
 		description: args.description,
